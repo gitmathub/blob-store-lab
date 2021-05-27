@@ -1,80 +1,43 @@
-const mkdirp = require('mkdirp-classic')
-const LRU = require('lru-cache')
-const eos = require('end-of-stream')
-const duplexify = require('duplexify')
-const path = require('path')
-const fs = require('fs')
-
-const noop = function() {}
-
-const join = function(root, dir) {
-  return path.join(root, path.resolve('/', dir).replace(/^[a-zA-Z]:/, ''))
+"use strict";
+exports.__esModule = true;
+exports.read = exports.write = void 0;
+var fsBlob = require('fs-blob-store');
+var memoryBlob = require('abstract-blob-store');
+// TODO: these lines goto tests
+var uri = "file://foo/bar/baz/text.txt";
+// const uri: string = "memory://foo/bar/baz/text.txt"
+var content = "hello du xsx";
+var bucket = "tmp";
+write(uri, content);
+read(uri, process.stdout); //TODO: works for file but not memory yet
+function write(uri, content) {
+    var _a = getStoreTypeAndPath(uri), type = _a.type, path = _a.path;
+    var store = createStore(type, bucket);
+    var stream = store.createWriteStream({ key: path }, function () { });
+    stream.write(content);
+    stream.end;
 }
-
-const listen = function(stream, opts, cb) {
-  if (!cb) return stream
-  eos(stream, function(err) {
-    if (err) return cb(err)
-    cb(null, opts)
-  })
-  return stream
+exports.write = write;
+function read(uri, out) {
+    var _a = getStoreTypeAndPath(uri), type = _a.type, path = _a.path;
+    var store = createStore(type, bucket);
+    var stream = store.createReadStream({ key: path }, function () { });
+    stream.pipe(out);
+    stream.end;
 }
-
-const BlobStore = function (opts) {
-  if (!(this instanceof BlobStore)) return new BlobStore(opts)
-  if (typeof opts === 'string') opts = {path:opts}
-
-  this.path = opts.path
-  this.cache = new LRU(opts.cache || 100)
+exports.read = read;
+function getStoreTypeAndPath(uri) {
+    var uriParts = uri.match(/^(\w+)(:\/\/)(.+)$/);
+    return ({ type: uriParts[1], path: uriParts[3] });
 }
-
-BlobStore.prototype.createWriteStream = function(opts, cb) {
-  if (typeof opts === 'string') opts = {key:opts}
-  if (opts.name && !opts.key) opts.key = opts.name
-
-  const key = join(this.path, opts.key)
-  const dir = path.dirname(key)
-  const cache = this.cache
-
-  if (cache.get(dir)) return listen(fs.createWriteStream(key, opts), opts, cb)
-
-  const proxy = listen(duplexify(), opts, cb)
-
-  proxy.setReadable(false)
-
-  mkdirp(dir, function (err) {
-    if (proxy.destroyed) return
-    if (err) return proxy.destroy(err)
-
-    cache.set(dir, true)
-    proxy.setWritable(fs.createWriteStream(key, opts))
-  })
-
-  return proxy
+function createStore(type, bucket) {
+    switch (type) {
+        case 'file':
+            return fsBlob(bucket);
+        case 's3':
+            console.log('s3 is not implemented yet');
+            break;
+        default:
+            return new memoryBlob();
+    }
 }
-
-BlobStore.prototype.createReadStream = function(key, opts) {
-  if (key && typeof key === 'object') return this.createReadStream(key.key, key)
-  return fs.createReadStream(join(this.path, key), opts)
-}
-
-BlobStore.prototype.exists = function(opts, cb) {
-  if (typeof opts === 'string') opts = {key:opts}
-  const key = join(this.path, opts.key)
-  fs.stat(key, function(err, stat) {
-    if (err && err.code !== 'ENOENT') return cb(err)
-    cb(null, !!stat)
-  })
-}
-
-BlobStore.prototype.remove = function(opts, cb) {
-  if (typeof opts === 'string') opts = {key:opts}
-  if (!opts) opts = noop
-  const key = join(this.path, opts.key)
-  fs.unlink(key, function(err) {
-    if (err && err.code !== 'ENOENT') return cb(err)
-    cb()
-  })
-}
-
-module.exports = BlobStore
