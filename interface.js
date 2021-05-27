@@ -2,27 +2,27 @@
 exports.__esModule = true;
 exports.write = void 0;
 var fsBlob = require("fs-blob-store");
-var uri = "file://foo/bar/baz/text.txt";
-write(uri);
-function write(uri) {
-    var uriParts = uri.match(/^(file)(:\/\/)(.+)$/);
-    var type = uriParts[1];
-    var path = uriParts[3];
-    var store = fsBlob('tmp');
-    switch (type) {
-        case 'file':
-            console.log("file");
-            break;
-        default:
-            console.log("no type match");
-    }
+var uri = "file://foo/bar/baz/text.txt"; // s3://
+var param = "hello du xx";
+var bucket = "tmp";
+write(uri, param);
+function write(uri, param) {
+    var _a = getStoreTypeAndPath(uri), type = _a.type, path = _a.path;
+    var store = createStore(type, bucket);
+    var stream = store.createWriteStream({ key: path });
+    stream.write(param);
+    stream.end;
 }
 exports.write = write;
-//   const stream = store.createWriteStream({
-//   }, function (err, opts) {
-//     console.log('done')
-//     store.createReadStream(opts).pipe(process.stdout)
-//   })
-//   stream.write('hello ')
-//   stream.end('world\n')
-// }
+function getStoreTypeAndPath(uri) {
+    var uriParts = uri.match(/^(file)(:\/\/)(.+)$/);
+    return ({ type: uriParts[1], path: uriParts[3] });
+}
+function createStore(type, bucket) {
+    switch (type) {
+        case 'file':
+            return fsBlob(bucket);
+        default:
+            return fsBlob(bucket);
+    }
+}

@@ -1,31 +1,29 @@
+
 import * as fsBlob from 'fs-blob-store'
 
-const uri = "file://foo/bar/baz/text.txt"
-write(uri)
+const uri: string = "file://foo/bar/baz/text.txt" // s3://
+const param: string = "hello du xx"
+const bucket: string = "tmp"
+write(uri, param)
 
-export function write(uri:string) {
+export function write(uri: string, param: any) {
+  const {type, path} = getStoreTypeAndPath(uri)
+  const store = createStore(type, bucket) 
+  const stream = store.createWriteStream({ key: path })
+  stream.write(param)
+  stream.end
+}
+
+function getStoreTypeAndPath(uri: string) {
   const uriParts: string[] = uri.match(/^(file)(:\/\/)(.+)$/)
-  const type = uriParts[1]
-  const path = uriParts[3]
-  
-  const store = fsBlob('tmp')
+  return ({type: uriParts[1], path: uriParts[3]})
+}
+
+function createStore(type: string, bucket: string) {
   switch (type) {
     case 'file':
-      console.log("file")
-      break
-    case 's3':
-      console.log("file")
-      break
+      return fsBlob(bucket)
     default:
-      console.log("no type match")
+      return fsBlob(bucket)
   }
 }
-//   const stream = store.createWriteStream({
-//   }, function (err, opts) {
-//     console.log('done')
-//     store.createReadStream(opts).pipe(process.stdout)
-//   })
-
-//   stream.write('hello ')
-//   stream.end('world\n')
-// }
