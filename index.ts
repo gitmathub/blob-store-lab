@@ -1,6 +1,7 @@
 
 const fsBlob = require('fs-blob-store')
 const memoryBlob = require('abstract-blob-store')
+const s3Blob = require('s3-blob-store')
 
 // TODO: these lines goto tests
 const uri: string = "file://foo/bar/baz/text.txt"
@@ -36,8 +37,7 @@ function createStore(type: string, bucket: string) {
     case 'file':
       return fsBlob(bucket)
     case 's3':
-      console.log('s3 is not implemented yet')
-      break
+      return s3Blob(bucket)
     default:
       return new memoryBlob()
   }

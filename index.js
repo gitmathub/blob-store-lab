@@ -3,6 +3,7 @@ exports.__esModule = true;
 exports.read = exports.write = void 0;
 var fsBlob = require('fs-blob-store');
 var memoryBlob = require('abstract-blob-store');
+var s3Blob = require('s3-blob-store');
 // TODO: these lines goto tests
 var uri = "file://foo/bar/baz/text.txt";
 // const uri: string = "memory://foo/bar/baz/text.txt"
@@ -35,8 +36,7 @@ function createStore(type, bucket) {
         case 'file':
             return fsBlob(bucket);
         case 's3':
-            console.log('s3 is not implemented yet');
-            break;
+            return s3Blob(bucket);
         default:
             return new memoryBlob();
     }
