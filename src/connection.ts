@@ -1,4 +1,3 @@
-import { resolve } from "path/posix"
 
 export interface ConnetionOptions {
   tobedefined: string
@@ -55,21 +54,30 @@ export class Connection {
     }
   }
 
-  read() {
-    let content = ""
-    try {
-      this.store
-        .createReadStream({ key: this.key })
-        .on("data", (data: any) => {
-          console.log("D", data.toString())
-          content += data.toString()
-          return content
-        })
-        // .pipe(process.stdout)
-    } catch (e) {
-      throw new Error("read failed " + e)
-    }
-  }
+  async read() {
+    var from = require('from2-array')
+    var concat = require('concat-stream')
+    const rs = this.store.createReadStream({ key: this.key })
+    const result = await rs.pipe( concat( (data: any) => { return data.toString()}))
+    return result
+    // let content = ""
+    // try {
+    //   const stream = this.store.createReadStream({ key: this.key })
+    //     // .pipe(process.stdout)
+    //     // console.log("Stream", stream)
+    //   stream.on("end", (data: any) => {
+    //     content += data.toString()
+    //       // console.log("D", data.toString())
+    //       // content += data.toString()
+    //       // return content
+    //     })
+    //     return content/
+
+
+  // } catch(e) {
+  //   throw new Error("read failed " + e)
+  // }
+}
 
   // setBucket(uri: string) {
   //   return uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)[3]

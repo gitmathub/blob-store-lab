@@ -11,7 +11,7 @@ describe('file connection', () => {
     expect(connection.key).toBe('foo/bar/test.txt')
   })
 
-  xit('writes content to file', () => {
+  it('writes content to file', () => {
     const connection = new Connection(uri)
     const content = "shoo be doo"
     expect(() => connection.write(content)).not.toThrow()
@@ -19,7 +19,8 @@ describe('file connection', () => {
 
   it('reads from a file', async () => {
     const connection = new Connection(uri)
-    expect(() => connection.read()).not.toThrow()
+    // expect(async() => await connection.read()).not.toThrow()
+    console.log(await connection.read())
   })
   // it('write throws error', () => {
   //   const uri = "file://test-bucket/foo/bar/test.txt"
