@@ -1,4 +1,4 @@
-import { rejects } from "assert/strict"
+import { resolve } from "path/posix"
 
 export interface ConnetionOptions {
   tobedefined: string
@@ -46,19 +46,29 @@ export class Connection {
     }
   }
 
-  write(content: string): Promise<void> {
+  write(content: string) {
+    try {
+      const stream = this.store.createWriteStream({ key: this.key })
+      stream.write(content).end
+    } catch (e) {
+      throw new Error("write failed " + e)
+    }
+  }
 
-    return new Promise((resolve, reject) => {
-      try {
-        const stream = this.store.createWriteStream({ key: this.key }, () => { })
-        stream.write(content)
-        stream.end
-        resolve()
-      } catch (e) {
-        reject()
-        throw new Error("write failed " + e)
-      }
-    })
+  read() {
+    let content = ""
+    try {
+      this.store
+        .createReadStream({ key: this.key })
+        .on("data", (data: any) => {
+          console.log("D", data.toString())
+          content += data.toString()
+          return content
+        })
+        // .pipe(process.stdout)
+    } catch (e) {
+      throw new Error("read failed " + e)
+    }
   }
 
   // setBucket(uri: string) {
