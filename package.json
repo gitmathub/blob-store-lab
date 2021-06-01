@@ -3,16 +3,14 @@
   "version": "0.0.1",
   "description": "lab for blob storage of different types",
   "main": "index.js",
-  "files": [
-    "**/*.ts"
-  ],
   "scripts": {
-    "start": "./node_modules/.bin/tsc index.ts && node -r esm index.js",
-    "test": "jest *test.ts"
+    "test": "jest"
   },
   "dependencies": {
     "abstract-blob-store": "^3.3.5",
     "aws-sdk": "^2.917.0",
+    "bucket-ts": "^1.0.5",
+    "bucket-ts-folder": "^1.0.3",
     "fs-blob-store": "^6.0.0",
     "s3-blob-store": "^4.1.1"
   },
