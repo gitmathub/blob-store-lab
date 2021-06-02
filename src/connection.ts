@@ -55,62 +55,11 @@ export class Connection {
   }
 
   async read() {
-    var from = require('from2-array')
-    var concat = require('concat-stream')
-    const rs = this.store.createReadStream({ key: this.key })
-    const result = await rs.pipe( concat( (data: any) => { return data.toString()}))
-    return result
-    // let content = ""
-    // try {
-    //   const stream = this.store.createReadStream({ key: this.key })
-    //     // .pipe(process.stdout)
-    //     // console.log("Stream", stream)
-    //   stream.on("end", (data: any) => {
-    //     content += data.toString()
-    //       // console.log("D", data.toString())
-    //       // content += data.toString()
-    //       // return content
-    //     })
-    //     return content/
-
-
-  // } catch(e) {
-  //   throw new Error("read failed " + e)
-  // }
-}
-
-  // setBucket(uri: string) {
-  //   return uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)[3]
-  // }
-  // findStoreTypeAndPath(uri: string): any {
-  //   const uriParts = uri.match(/^(\w+)(:\/\/)(.+)$/)
-  //   return ({type: uriParts[1], path: uriParts[3]})
-  // }
-
-  // switch (type) {
-
-  //   case 'file':
-  //     return fsBlob(bucket)
-
-  //   case 's3':
-
-  //     const serverUrl = 'http://127.0.0.1:4568'
-
-  //     const client = new AWS.S3({
-  //       accessKeyId: 'S3RVER',
-  //       secretAccessKey: 'S3RVER',
-  //       endpoint: new AWS.Endpoint(serverUrl),
-  //       sslEnabled: false,
-  //       s3ForcePathStyle: true
-  //     });
-
-  //     const store = s3Blob({
-  //       client: client,
-  //       bucket: bucket
-  //     });
-  //     return store
-
-  //   default:
-  //     return new memoryBlob()
-  // }
+    const stream = this.store.createReadStream({ key: this.key })
+    let result = ''
+    for await (const chunk of stream) {
+      result += chunk;
+    }
+    return result;
+  }
 }

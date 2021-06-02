@@ -4,7 +4,7 @@ import { Connection } from './connection'
 describe('file connection', () => {
   const uri = "file://test-bucket/foo/bar/test.txt"
 
-  xit('can create file connection', () => {
+  it('can create file connection', () => {
     const connection = new Connection(uri)
     expect(connection.uri).toBe(uri)
     expect(connection.type).toBe('file')
@@ -19,13 +19,9 @@ describe('file connection', () => {
 
   it('reads from a file', async () => {
     const connection = new Connection(uri)
-    // expect(async() => await connection.read()).not.toThrow()
-    console.log(await connection.read())
+    const content = "shoo be doo"
+    await connection.write(content)
+    const result = await connection.read()
+    expect(result).toBe(content)
   })
-  // it('write throws error', () => {
-  //   const uri = "file://test-bucket/foo/bar/test.txt"
-  //   const content = "shoo be doo"
-  //   const connection = new Connection(uri)
-  //   expect(() => {connection.write(content)}).toThrowError()
-  // })
 })
