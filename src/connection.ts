@@ -69,12 +69,7 @@ export class Connection {
     return result;
   }
 
-  testPromise(): Promise<void> {
-    return new Promise((resolve) => {
-      return setTimeout(
-        () => { console.log("done"); resolve() },
-        4000
-      )
-    })
+  async delete(): Promise<void> {
+    await this.store.remove({ key: this.key }, ()=>{})
   }
 }
