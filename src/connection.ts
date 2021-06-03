@@ -1,7 +1,9 @@
 
 export interface ConnetionOptions {
-  tobedefined: string
+  bucket?: string
+  client?: any 
 }
+
 export class Connection {
   uri: string
   type: string | null
@@ -14,52 +16,65 @@ export class Connection {
     if (!uri) throw new Error("Connection URI is missing")
     this.uri = uri
     this.options = options || null
-    this.type = this.setType(uri)
-    this.bucket = this.setBucket(uri)
-    this.key = this.setKey(uri)
+    this.type = this.setType()
+    this.bucket = this.setBucket()
+    this.key = this.setKey()
     this.store = this.setStore()
   }
 
-  private setType(uri: string): string | null {
-    const match = uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
+  private setType(): string | null {
+    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
     return (Array.isArray(match) && match[1]) || null
   }
 
-  private setBucket(uri: string): string | null {
-    const match = uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
+  private setBucket(): string | null {
+    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
     return (Array.isArray(match) && match[3]) || null
   }
 
-  private setKey(uri: string): string | null {
-    const match = uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
+  private setKey(): string | null {
+    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
     return (Array.isArray(match) && match[4]) || null
   }
 
   private setStore(): any {
+    let store
     switch (this.type) {
       case 'file':
-        const store = require('fs-blob-store')
+        store = require('fs-blob-store')
         return store(this.bucket)
+      case 's3':
+        store = require('s3-blob-store')
+        return store({client: this.options?.client, bucket: this.bucket})
       default:
         throw new Error("not implemented")
     }
   }
 
-  write(content: string) {
+  async write(content: string): Promise<void> {
     try {
       const stream = this.store.createWriteStream({ key: this.key })
-      stream.write(content).end
+      return stream.write(content)
     } catch (e) {
       throw new Error("write failed " + e)
     }
   }
 
-  async read() {
+  async read(): Promise<string> {
     const stream = this.store.createReadStream({ key: this.key })
     let result = ''
     for await (const chunk of stream) {
       result += chunk;
     }
     return result;
+  }
+
+  testPromise(): Promise<void> {
+    return new Promise((resolve) => {
+      return setTimeout(
+        () => { console.log("done"); resolve() },
+        4000
+      )
+    })
   }
 }

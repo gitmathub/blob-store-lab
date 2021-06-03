@@ -4,7 +4,7 @@
   "description": "lab for blob storage of different types",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --detectOpenHandle"
   },
   "dependencies": {
     "abstract-blob-store": "^3.3.5",
