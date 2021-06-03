@@ -8,7 +8,7 @@ describe('Bucket-TS file connection', () => {
     "createMissingFolders": true
   }
 
-  it('can create file connection', () => {
+  xit('can create file connection', () => {
     const connection = new Connection(uri, options)
     expect(connection.uri).toBe(uri)
     expect(connection.options).toBe(options)

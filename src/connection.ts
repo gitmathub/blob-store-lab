@@ -1,7 +1,7 @@
 
 export interface ConnetionOptions {
   bucket?: string
-  client?: any 
+  client?: any
 }
 
 export class Connection {
@@ -41,23 +41,23 @@ export class Connection {
     let store
     switch (this.type) {
       case 'file':
-        store = require('fs-blob-store')
+        // store = require('fs-blob-store')
+        store = require('./fs-blob-store') // use patched lib
         return store(this.bucket)
       case 's3':
         store = require('s3-blob-store')
-        return store({client: this.options?.client, bucket: this.bucket})
+        return store({ client: this.options?.client, bucket: this.bucket })
       default:
         throw new Error("not implemented")
     }
   }
 
   async write(content: string): Promise<void> {
-    try {
-      const stream = this.store.createWriteStream({ key: this.key })
-      return stream.write(content)
-    } catch (e) {
-      throw new Error("write failed " + e)
-    }
+    const stream = this.store.createWriteStream({ key: this.key })
+    // const fs = require('fs')
+    // const stream = fs.createWriteStream("/Users/mat/Tui/blob-store-lab/test-bucket/tttt.txt")
+    await sleep()
+    return stream.write(content)
   }
 
   async read(): Promise<string> {
@@ -70,6 +70,14 @@ export class Connection {
   }
 
   async delete(): Promise<void> {
-    await this.store.remove({ key: this.key }, ()=>{})
+    await this.store.remove({ key: this.key }, () => { })
   }
+}
+
+function sleep(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve()
+    }, 4000)
+  })
 }
