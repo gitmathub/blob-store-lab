@@ -44,16 +44,3 @@ export class FsBlob implements Blob {
     return await readdir(folder)
   }
 }
-
-// keep for maybe later?
-function pipeStream(source: any, dest: any): Promise<boolean> {
-  return new Promise<boolean>((resolve, reject) => {
-    source.on('end', () => {
-      const variable = dest.toString()
-      console.log("variable", variable)
-      resolve(true)
-    });
-    source.on('error', reject(false));
-    source.pipe(dest);
-  })
-}
