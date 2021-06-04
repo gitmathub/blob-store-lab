@@ -34,9 +34,23 @@ BlobStore.prototype.createWriteStream = function(opts, cb) {
 
   const key = join(this.path, opts.key)
   const dir = path.dirname(key)
+  const cache = this.cache
 
-  mkdirp(dir)
-  return fs.createWriteStream(key, opts)
+  if (cache.get(dir)) return listen(fs.createWriteStream(key, opts), opts, cb)
+
+  const proxy = listen(duplexify(), opts, cb)
+
+  proxy.setReadable(false)
+
+  mkdirp(dir, function (err) {
+    if (proxy.destroyed) return
+    if (err) return proxy.destroy(err)
+
+    cache.set(dir, true)
+    proxy.setWritable(fs.createWriteStream(key, opts))
+  })
+
+  return proxy
 }
 
 BlobStore.prototype.createReadStream = function(key, opts) {

@@ -52,20 +52,25 @@ export class Connection {
     }
   }
 
-  async write(content: string): Promise<void> {
-    const stream = this.store.createWriteStream({ key: this.key })
-    // const fs = require('fs')
-    // const stream = fs.createWriteStream("/Users/mat/Tui/blob-store-lab/test-bucket/tttt.txt")
-    await sleep()
-    return stream.write(content)
+  async write(content: string, cb?: any): Promise<void> {
+    const stream = this.store.createWriteStream({ key: this.key }, async () => {
+      // console.log("Write call back")
+      // await this.store.createReadStream({ key: this.key }).pipe(process.stdout)
+      if (cb) cb()
+    })
+    stream.write(content)
+    stream.end()
+    
   }
 
   async read(): Promise<string> {
+    console.log("read has been called")
     const stream = this.store.createReadStream({ key: this.key })
     let result = ''
     for await (const chunk of stream) {
       result += chunk;
     }
+    console.log("result", result)
     return result;
   }
 
@@ -80,4 +85,8 @@ function sleep(): Promise<void> {
       resolve()
     }, 4000)
   })
+}
+
+function writeInFile() {
+  
 }
