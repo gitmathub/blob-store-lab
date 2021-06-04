@@ -1,4 +1,3 @@
-import { readFile, rm } from 'fs/promises';
 import { Blob } from './blob'
 import { FsBlob } from './fs-blob'
 
@@ -56,4 +55,9 @@ export class Connection {
     if (!folder.match(`^(\/*)${this.blob.bucket}\/.*`)) return
     await this.blob.deleteFolder(folder)
   }
+
+  async listFiles(folder: string): Promise<string[]> {
+    return await this.blob.listFiles(folder)
+  }
+
 }

@@ -15,4 +15,5 @@ export interface Blob {
   read(): Promise<string> 
   delete(): Promise<void> 
   deleteFolder(folder: string): Promise<void> 
+  listFiles(folder: string): Promise<string[]>
 }

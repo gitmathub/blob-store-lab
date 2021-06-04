@@ -1,5 +1,5 @@
 import { Blob, BlobOptions } from './blob'
-import { readFile, rm, writeFile } from 'fs/promises'
+import { readFile, rm, writeFile, readdir } from 'fs/promises'
 import { mkdirSync } from "fs"
 
 export class FsBlob implements Blob {
@@ -31,14 +31,17 @@ export class FsBlob implements Blob {
   }
 
   async delete(): Promise<void> {
-    return await rm(this.key)
+    await rm(this.key)
   }
 
   async deleteFolder(folder: string): Promise<void> {
-    if (!folder) return
     // prevent worst cases match at least bucket
-    if (!folder.match(`^(\/*)${this.bucket}\/.*`)) return
-    return await rm(folder, { recursive: true })
+    if (!folder.match(`^(\/*)${this.bucket}\/.*`)) return Promise.resolve()
+    await rm(folder, { recursive: true })
+  }
+
+  async listFiles(folder: string): Promise<string[]> {
+    return await readdir(folder)
   }
 }
 

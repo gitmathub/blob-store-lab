@@ -37,16 +37,28 @@ describe('File connection', () => {
     expect(result).toBe(content)
   })
 
+  it('writes and lists a file', async () => {
+    const path = `${bucket}/foo/bar/`
+    const file = `test-04.txt`
+    const uri = `file://${path}${file}`
+    const connection = new Connection(uri)
+    const content = "shoo be doo"
+    await connection.write(content)
+    const files = await connection.listFiles(path)
+    expect(files.filter(f => f === file).length).toBe(1)
+  })
+
   it('removes a file', async () => {
-    const uri = `file://${bucket}/foo/bar/test-04.txt`
+    const path = `${bucket}/foo/bar/`
+    const file = `test-05.txt`
+    const uri = `file://${path}${file}`
     const connection = new Connection(uri)
     const content = "shoo be doo"
     await connection.write(content)
     await connection.delete()
-    expect(true).toBeTruthy()
+    const files = await connection.listFiles(path)
+    expect(files.filter(f => f === file).length).toBe(0)
   })
-
-
 })
 
 describe('S3 connection', () => {
