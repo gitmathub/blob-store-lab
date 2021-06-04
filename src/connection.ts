@@ -1,4 +1,6 @@
 import { readFile, rm } from 'fs/promises';
+import { Blob } from './blob'
+import { FsBlob } from './fs-blob'
 
 export interface ConnetionOptions {
   bucket?: string
@@ -8,84 +10,50 @@ export interface ConnetionOptions {
 export class Connection {
   uri: string
   type: string | null
-  bucket: string
-  path: string
-  file: string
-  key: string
-  store: any
+  blob: Blob
   options?: ConnetionOptions | null
 
   constructor(uri: string, options?: ConnetionOptions) {
     if (!uri) throw new Error("Connection URI is missing")
     this.uri = uri
-    this.options = options || null
-    const parts = this.uri.match(/^(\w+)(:\/\/)([^\/]+)(.*\/)(.+)$/)
-    this.type = parts ? parts[1] : null
-    this.bucket = parts ? parts[3] : ''
-    this.path = parts ? parts[4] : ''
-    this.file = parts ? parts[5] : ''
-    this.key = this.path + this.file
-    this.store = this.setStore()
+    this.type = this.setType()
+    this.blob = this.setBlob()
   }
 
-  private setStore(): any {
-    let store
+  private setType(): string {
+    const parts = this.uri.match(/^(\w+)(:\/\/)([^\/]+)(.*\/)(.+)$/)
+    if (!parts || !parts[1]) throw new Error("No connection type " + this.uri)
+    return parts[1]
+  }
+
+  private setBlob(): Blob {
     switch (this.type) {
       case 'file':
-        // store = require('fs-blob-store')
-        // store = require('./fs-blob-store') // use patched lib
-        store = require('fs')
-        this.key = this.bucket + this.path + this.file
-        return store
-      case 's3':
-        store = require('s3-blob-store')
-        return store({ client: this.options?.client, bucket: this.bucket })
+        return new FsBlob(this.uri)
+      // case 's3':
+      //   blob = require('s3-blob-blob')
+      //   return blob({ client: this.options?.client, bucket: this.bucket })
       default:
         throw new Error("not implemented")
     }
   }
 
   async write(content: string): Promise<void> {
-    // file
-    // check on fsPromises.mkdir(path[, options])
-    const mkdirp = require('mkdirp-classic')
-    await mkdirp.sync(this.bucket + this.path)
-    // common
-    const stream = this.store.createWriteStream(this.key)
-    await stream.write(content)
-    stream.end()
+    this.blob.write(content)
   }
 
   async read(): Promise<string> {
-    return (await readFile(this.key)).toString();
-    // const stream = this.store.createReadStream(this.key)
-    // let result = ''
-    // for await (const chunk of stream) {
-    //   result += chunk;
-    // }
-    // return result;
+    return this.blob.read()
   }
 
   async delete(): Promise<void> {
-    return await rm(this.key)
+    await this.blob.delete()
   }
 
   async deleteFolder(folder: string): Promise<void> {
     if (!folder) return
     // prevent worst cases match at least bucket
-    if (!folder.match(`^(\/*)${this.bucket}\/.*`)) return
-    return await rm(folder, { recursive: true })
+    if (!folder.match(`^(\/*)${this.blob.bucket}\/.*`)) return
+    await this.blob.deleteFolder(folder)
   }
-}
-
-function pipeStream(source: any, dest: any): Promise<boolean> {
-  return new Promise<boolean>((resolve, reject) => {
-    source.on('end', () => {
-      const variable = dest.toString()
-      console.log("variable", variable)
-      resolve(true)
-    });
-    source.on('error', reject(false));
-    source.pipe(dest);
-  })
 }

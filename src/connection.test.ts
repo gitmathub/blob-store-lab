@@ -15,9 +15,9 @@ describe('File connection', () => {
     const connection = new Connection(uri)
     expect(connection.uri).toBe(uri)
     expect(connection.type).toBe('file')
-    expect(connection.bucket).toBe(`${bucket}`)
-    expect(connection.path).toBe('/foo/bar/')
-    expect(connection.file).toBe('test-01.txt')
+    expect(connection.blob.bucket).toBe(`${bucket}`)
+    expect(connection.blob.path).toBe('/foo/bar/')
+    expect(connection.blob.file).toBe('test-01.txt')
   })
 
   it('writes content to file', async () => {
@@ -48,14 +48,6 @@ describe('File connection', () => {
 
 })
 
-function sleep(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve()
-    }, 3000)
-  })
-}
-
 describe('S3 connection', () => {
   const bucket = "test-bucket"
 
@@ -64,6 +56,6 @@ describe('S3 connection', () => {
     const connection = new Connection(uri, { client: "AWS client dummy string" })
     expect(connection.uri).toBe(uri)
     expect(connection.type).toBe('s3')
-    expect(connection.key).toBe('foo/bar/test.txt')
+    expect(connection.blob.key).toBe('foo/bar/test.txt')
   })
 })
