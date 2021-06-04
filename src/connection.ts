@@ -1,3 +1,4 @@
+import { readFile, rm } from 'fs/promises';
 
 export interface ConnetionOptions {
   bucket?: string
@@ -7,8 +8,10 @@ export interface ConnetionOptions {
 export class Connection {
   uri: string
   type: string | null
-  bucket: string | null
-  key: string | null
+  bucket: string
+  path: string
+  file: string
+  key: string
   store: any
   options?: ConnetionOptions | null
 
@@ -16,25 +19,13 @@ export class Connection {
     if (!uri) throw new Error("Connection URI is missing")
     this.uri = uri
     this.options = options || null
-    this.type = this.setType()
-    this.bucket = this.setBucket()
-    this.key = this.setKey()
+    const parts = this.uri.match(/^(\w+)(:\/\/)([^\/]+)(.*\/)(.+)$/)
+    this.type = parts ? parts[1] : null
+    this.bucket = parts ? parts[3] : ''
+    this.path = parts ? parts[4] : ''
+    this.file = parts ? parts[5] : ''
+    this.key = this.path + this.file
     this.store = this.setStore()
-  }
-
-  private setType(): string | null {
-    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
-    return (Array.isArray(match) && match[1]) || null
-  }
-
-  private setBucket(): string | null {
-    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
-    return (Array.isArray(match) && match[3]) || null
-  }
-
-  private setKey(): string | null {
-    const match = this.uri.match(/^(\w+)(:\/\/)([^\/]+)\/(.+)$/)
-    return (Array.isArray(match) && match[4]) || null
   }
 
   private setStore(): any {
@@ -42,8 +33,10 @@ export class Connection {
     switch (this.type) {
       case 'file':
         // store = require('fs-blob-store')
-        store = require('./fs-blob-store') // use patched lib
-        return store(this.bucket)
+        // store = require('./fs-blob-store') // use patched lib
+        store = require('fs')
+        this.key = this.bucket + this.path + this.file
+        return store
       case 's3':
         store = require('s3-blob-store')
         return store({ client: this.options?.client, bucket: this.bucket })
@@ -52,41 +45,47 @@ export class Connection {
     }
   }
 
-  async write(content: string, cb?: any): Promise<void> {
-    const stream = this.store.createWriteStream({ key: this.key }, async () => {
-      // console.log("Write call back")
-      // await this.store.createReadStream({ key: this.key }).pipe(process.stdout)
-      if (cb) cb()
-    })
-    stream.write(content)
+  async write(content: string): Promise<void> {
+    // file
+    // check on fsPromises.mkdir(path[, options])
+    const mkdirp = require('mkdirp-classic')
+    await mkdirp.sync(this.bucket + this.path)
+    // common
+    const stream = this.store.createWriteStream(this.key)
+    await stream.write(content)
     stream.end()
-    
   }
 
   async read(): Promise<string> {
-    console.log("read has been called")
-    const stream = this.store.createReadStream({ key: this.key })
-    let result = ''
-    for await (const chunk of stream) {
-      result += chunk;
-    }
-    console.log("result", result)
-    return result;
+    return (await readFile(this.key)).toString();
+    // const stream = this.store.createReadStream(this.key)
+    // let result = ''
+    // for await (const chunk of stream) {
+    //   result += chunk;
+    // }
+    // return result;
   }
 
   async delete(): Promise<void> {
-    await this.store.remove({ key: this.key }, () => { })
+    return await rm(this.key)
+  }
+
+  async deleteFolder(folder: string): Promise<void> {
+    if (!folder) return
+    // prevent worst cases match at least bucket
+    if (!folder.match(`^(\/*)${this.bucket}\/.*`)) return
+    return await rm(folder, { recursive: true })
   }
 }
 
-function sleep(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve()
-    }, 4000)
+function pipeStream(source: any, dest: any): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
+    source.on('end', () => {
+      const variable = dest.toString()
+      console.log("variable", variable)
+      resolve(true)
+    });
+    source.on('error', reject(false));
+    source.pipe(dest);
   })
-}
-
-function writeInFile() {
-  
 }
