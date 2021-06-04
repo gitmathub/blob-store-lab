@@ -25,9 +25,10 @@ describe('File connection', () => {
     const connection = new Connection(uri)
     const content = "shoo be doo"
     await connection.write(content)
+    // suitable test is missing
   })
 
-  it('reads from a file', async () => {
+  it('writes a file and reads from that file', async () => {
     const uri = `file://${bucket}/foo/bar/test-03.txt`
     const connection = new Connection(uri)
     const content = "shoo be doo"
