@@ -60,15 +60,3 @@ describe('File connection', () => {
     expect(files.filter(f => f === file).length).toBe(0)
   })
 })
-
-describe('S3 connection', () => {
-  const bucket = "test-bucket"
-
-  xit('can create a connection', () => {
-    const uri = `s3://${bucket}/foo/bar/test-11.txt`
-    const connection = new Connection(uri, { client: "AWS client dummy string" })
-    expect(connection.uri).toBe(uri)
-    expect(connection.type).toBe('s3')
-    expect(connection.blob.key).toBe('foo/bar/test.txt')
-  })
-})

@@ -1,5 +1,6 @@
 import { Blob } from './blob'
 import { FsBlob } from './fs-blob'
+import { s3Blob } from './s3-blob'
 
 export interface ConnetionOptions {
   bucket?: string
@@ -29,9 +30,8 @@ export class Connection {
     switch (this.type) {
       case 'file':
         return new FsBlob(this.uri)
-      // case 's3':
-      //   blob = require('s3-blob-blob')
-      //   return blob({ client: this.options?.client, bucket: this.bucket })
+      case 's3':
+        return new s3Blob(this.uri)
       default:
         throw new Error("not implemented")
     }
