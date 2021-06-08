@@ -1,6 +1,6 @@
-import { Blob } from './blob'
-import { FsBlob } from './fs-blob'
-import { s3Blob } from './s3-blob'
+import { Store } from './store'
+import { FsStore } from './fs-store'
+import { S3Store } from './s3-store'
 
 export interface ConnetionOptions {
   bucket?: string
@@ -10,54 +10,53 @@ export interface ConnetionOptions {
 export class Connection {
   uri: string
   type: string | null
-  blob: Blob
+  bucket: string
+  store: Store
   options?: ConnetionOptions | null
 
   constructor(uri: string, options?: ConnetionOptions) {
     if (!uri) throw new Error("Connection URI is missing")
     this.uri = uri
-    this.type = this.setType()
-    this.blob = this.setBlob()
-  }
-
-  private setType(): string {
-    const parts = this.uri.match(/^(\w+)(:\/\/)([^\/]+)(.*\/)(.+)$/)
+    const parts = this.uri.match(/^(\w+)(:\/\/)([^\/]+)/)
     if (!parts || !parts[1]) throw new Error("No connection type " + this.uri)
-    return parts[1]
+    this.type = parts[1]
+    if (!parts[3]) throw new Error("No bucket " + this.uri)
+    this.bucket = parts[3]
+    this.store = this.setStore()
   }
 
-  private setBlob(): Blob {
+  private setStore(): Store {
     switch (this.type) {
       case 'file':
-        return new FsBlob(this.uri)
+        return new FsStore(this.bucket)
       case 's3':
-        return new s3Blob(this.uri)
+        return new S3Store(this.uri)
       default:
-        throw new Error("not implemented")
+        throw new Error("not implemented: " + this.type)
     }
   }
 
-  async write(content: string): Promise<void> {
-    this.blob.write(content)
+  async write(key: string, content?: string): Promise<void> {
+    this.store.write(key, content)
   }
 
-  async read(): Promise<string> {
-    return this.blob.read()
+  async read(key: string): Promise<string> {
+    return this.store.read(key)
   }
 
-  async delete(): Promise<void> {
-    await this.blob.delete()
+  async delete(key: string): Promise<void> {
+    await this.store.delete(key)
   }
 
   async deleteFolder(folder: string): Promise<void> {
     if (!folder) return
     // prevent worst cases match at least bucket
-    if (!folder.match(`^(\/*)${this.blob.bucket}\/.*`)) return
-    await this.blob.deleteFolder(folder)
+    if (!folder.match(`^(\/*)${this.bucket}\/.*`)) return
+    await this.store.deleteFolder(folder)
   }
 
   async listFiles(folder: string): Promise<string[]> {
-    return await this.blob.listFiles(folder)
+    return await this.store.listFiles(folder)
   }
 
 }

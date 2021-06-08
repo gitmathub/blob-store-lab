@@ -8,11 +8,12 @@ let instance: typeof S3rver;
 
 describe('S3 connection', () => {
 
-  const bucket = "test-bucket"
-  // TODO: makd this env variable
-
+  let connection: Connection
+  const bucket = "test-s3-bucket"
+  const uri = `file://${bucket}`
 
   beforeAll((done) => {
+    connection = new Connection(uri)
     instance = new S3rver({
       port: 8082,
       hostname: 'localhost',
@@ -42,52 +43,44 @@ describe('S3 connection', () => {
     // tmpDir.removeCallback()
   })
 
-  it('can create file connection', () => {
-    const uri = `s3://${bucket}/foo/bar/test-11.txt`
-    const connection = new Connection(uri, { client })
+  it('can create connection', () => {
     expect(connection.uri).toBe(uri)
-    expect(connection.type).toBe('s3')
-    expect(connection.blob.bucket).toBe(`${bucket}`)
-    expect(connection.blob.path).toBe('/foo/bar/')
-    expect(connection.blob.file).toBe('test-11.txt')
+    expect(connection.type).toBe('file')
+    expect(connection.bucket).toBe(`${bucket}`)
   })
-
+ 
   xit('writes content to file', async () => {
-    const uri = `file://${bucket}/foo/bar/test-02.txt`
-    const connection = new Connection(uri)
+    const key = `/foo/bar/test-02.txt`
     const content = "shoo be doo"
-    await connection.write(content)
+    await connection.write(key, content)
     // suitable test is missing
   })
 
   xit('writes a file and reads from that file', async () => {
-    const uri = `file://${bucket}/foo/bar/test-03.txt`
-    const connection = new Connection(uri)
+    const key = `foo/bar/test-03.txt`
     const content = "shoo be doo"
-    await connection.write(content)
-    const result = await connection.read()
+    await connection.write(key, content)
+    const result = await connection.read(key)
     expect(result).toBe(content)
   })
 
   xit('writes and lists a file', async () => {
-    const path = `${bucket}/foo/bar/`
+    const path = `/foo/bar`
     const file = `test-04.txt`
-    const uri = `file://${path}${file}`
-    const connection = new Connection(uri)
+    const key = `${path}/${file}`
     const content = "shoo be doo"
-    await connection.write(content)
+    await connection.write(key, content)
     const files = await connection.listFiles(path)
     expect(files.filter(f => f === file).length).toBe(1)
   })
 
   xit('removes a file', async () => {
-    const path = `${bucket}/foo/bar/`
+    const path = `/foo/bar/`
     const file = `test-05.txt`
-    const uri = `file://${path}${file}`
-    const connection = new Connection(uri)
+    const key = `${path}${file}`
     const content = "shoo be doo"
-    await connection.write(content)
-    await connection.delete()
+    await connection.write(key, content)
+    await connection.delete(key)
     const files = await connection.listFiles(path)
     expect(files.filter(f => f === file).length).toBe(0)
   })

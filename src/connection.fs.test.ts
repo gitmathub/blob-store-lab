@@ -3,59 +3,58 @@ import { Connection } from './connection'
 
 describe('File connection', () => {
 
+  let connection: Connection
   const bucket = "test-bucket"
+  const uri = `file://${bucket}`
+
+  beforeAll(async()=>{
+    connection = new Connection(uri)
+  })
+
   afterAll(async() => {
-    const uri = `file://${bucket}/anything.txt`
-    const connection = new Connection(uri)
-    await connection.deleteFolder(bucket + "/")
+    // const uri = `file://${bucket}/anything.txt`
+    // const connection = new Connection(uri)
+    // await connection.deleteFolder(bucket + "/")
   })
 
   it('can create file connection', () => {
-    const uri = `file://${bucket}/foo/bar/test-01.txt`
-    const connection = new Connection(uri)
     expect(connection.uri).toBe(uri)
     expect(connection.type).toBe('file')
-    expect(connection.blob.bucket).toBe(`${bucket}`)
-    expect(connection.blob.path).toBe('/foo/bar/')
-    expect(connection.blob.file).toBe('test-01.txt')
+    expect(connection.bucket).toBe(`${bucket}`)
   })
 
   it('writes content to file', async () => {
-    const uri = `file://${bucket}/foo/bar/test-02.txt`
-    const connection = new Connection(uri)
+    const key = `/foo/bar/test-02.txt`
     const content = "shoo be doo"
-    await connection.write(content)
+    await connection.write(key, content)
     // suitable test is missing
   })
 
   it('writes a file and reads from that file', async () => {
-    const uri = `file://${bucket}/foo/bar/test-03.txt`
-    const connection = new Connection(uri)
+    const key = `foo/bar/test-03.txt`
     const content = "shoo be doo"
-    await connection.write(content)
-    const result = await connection.read()
+    await connection.write(key, content)
+    const result = await connection.read(key)
     expect(result).toBe(content)
   })
 
   it('writes and lists a file', async () => {
-    const path = `${bucket}/foo/bar/`
+    const path = `/foo/bar`
     const file = `test-04.txt`
-    const uri = `file://${path}${file}`
-    const connection = new Connection(uri)
+    const key = `${path}/${file}`
     const content = "shoo be doo"
-    await connection.write(content)
+    await connection.write(key, content)
     const files = await connection.listFiles(path)
     expect(files.filter(f => f === file).length).toBe(1)
   })
 
   it('removes a file', async () => {
-    const path = `${bucket}/foo/bar/`
+    const path = `/foo/bar/`
     const file = `test-05.txt`
-    const uri = `file://${path}${file}`
-    const connection = new Connection(uri)
+    const key = `${path}${file}`
     const content = "shoo be doo"
-    await connection.write(content)
-    await connection.delete()
+    await connection.write(key, content)
+    await connection.delete(key)
     const files = await connection.listFiles(path)
     expect(files.filter(f => f === file).length).toBe(0)
   })

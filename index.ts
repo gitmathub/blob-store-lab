@@ -1,8 +1,8 @@
 
-const fsBlob = require('fs-blob-store')
-const memoryBlob = require('abstract-blob-store')
+const fsStore = require('fs-Store-store')
+const memoryStore = require('abstract-Store-store')
 
-const s3Blob = require('s3-blob-store')
+const s3Store = require('s3-Store-store')
 const AWS = require('aws-sdk');
 
 
@@ -38,7 +38,7 @@ function createStore(type: string, bucket: string) {
   switch (type) {
 
     case 'file':
-      return fsBlob(bucket)
+      return fsStore(bucket)
 
     case 's3':
 
@@ -52,13 +52,13 @@ function createStore(type: string, bucket: string) {
         s3ForcePathStyle: true
       });
     
-      const store = s3Blob({
+      const store = s3Store({
         client: client,
         bucket: bucket
       });
       return store
 
     default:
-      return new memoryBlob()
+      return new memoryStore()
   }
 }
